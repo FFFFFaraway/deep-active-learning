@@ -158,3 +158,64 @@ class CIFAR10_Net(nn.Module):
 
     def get_embedding_dim(self):
         return 50
+
+
+class PreNorm(nn.Module):
+    def __init__(self, dim, fn):
+        super().__init__()
+        self.norm = nn.LayerNorm(dim)
+        self.fn = fn
+
+    def forward(self, x, **kwargs):
+        return self.fn(self.norm(x), **kwargs)
+
+
+class FeedForward(nn.Module):
+    def __init__(self, in_dim, hidden_dim, out_dim, dropout=0.):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, out_dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+class Encoder(nn.Module):
+    def __init__(self, in_dim, out_dim, dropout=0.):
+        super().__init__()
+        self.net = PreNorm(in_dim, FeedForward(in_dim, in_dim // 2, out_dim, dropout=dropout))
+
+    def forward(self, x):
+        return self.net(x)
+
+
+class SAC_Net(nn.Module):
+    def __init__(self):
+        super(SAC_Net, self).__init__()
+        v_dim = 2048
+        a_dim = 512
+        t_dim = 768
+        h_dim = 128
+        out_dim = 4
+
+        self.a_acoustic = Encoder(a_dim, h_dim)
+        self.t_acoustic = Encoder(t_dim, h_dim)
+        self.v_enc = Encoder(v_dim, h_dim)
+
+        self.fusion = nn.Linear(3 * h_dim, out_dim)
+
+    def forward(self, x):
+        v, a, t, p = x[:, :2048], x[:, 2048: 2048+512], x[:, 2048+512:-768], x[:, -768:]
+        aa = self.a_acoustic(a)
+        ta = self.t_acoustic(t)
+        vh = self.v_enc(v)
+
+        emb = torch.cat([vh, aa, ta], dim=-1)
+        return self.fusion(emb), emb
+
+    def get_embedding_dim(self):
+        return 3 * 128

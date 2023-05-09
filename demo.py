@@ -10,9 +10,9 @@ if __name__ == '__main__':
     parser.add_argument('--n_init_labeled', type=int, default=100, help="number of init labeled samples")
     parser.add_argument('--n_query', type=int, default=100, help="number of queries per round")
     parser.add_argument('--n_round', type=int, default=10, help="number of rounds")
-    parser.add_argument('--dataset_name', type=str, default="MNIST",
-                        choices=["MNIST", "FashionMNIST", "SVHN", "CIFAR10"], help="dataset")
-    parser.add_argument('--strategy_name', type=str, default="MarginSamplingDropout",
+    parser.add_argument('--dataset_name', type=str, default="SAC",
+                        choices=["MNIST", "FashionMNIST", "SVHN", "CIFAR10", "SAC"], help="dataset")
+    parser.add_argument('--strategy_name', type=str, default="AdversarialDeepFool",
                         choices=["RandomSampling",
                                  "LeastConfidence",
                                  "MarginSampling",

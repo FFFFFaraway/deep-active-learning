@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 import torch
 from torchvision import datasets
 
@@ -58,3 +59,25 @@ def get_CIFAR10(handler):
     data_train = datasets.CIFAR10('./data/CIFAR10', train=True, download=True)
     data_test = datasets.CIFAR10('./data/CIFAR10', train=False, download=True)
     return Data(data_train.data[:40000], torch.LongTensor(data_train.targets)[:40000], data_test.data[:40000], torch.LongTensor(data_test.targets)[:40000], handler)
+
+def get_SAC(handler):
+    f = open("data/SAC.pkl", "rb")
+    split_data = pickle.load(f)
+    data_train = split_data['train']
+    data_test = split_data['test']
+
+    Y_train = torch.from_numpy(data_train['y'].astype(int))
+    Y_test = torch.from_numpy(data_test['y'].astype(int))
+    # 4096 dimension vector:
+    # [: 2048]: vision
+    # [2048: 2048+512]: audio
+    # [2048+512: -768]: live text
+    # [-768:]: script
+    X_train = np.stack([np.concatenate([data_train[m][idx].mean(0) if m != 'v' else data_train[m][idx]
+                                        for m in 'vatp']) for idx in range(len(Y_train))])
+    X_test = np.stack([np.concatenate([data_test[m][idx].mean(0) if m != 'v' else data_test[m][idx]
+                                       for m in 'vatp']) for idx in range(len(Y_test))])
+    X_train = torch.from_numpy(X_train)
+    X_test = torch.from_numpy(X_test)
+
+    return Data(X_train, Y_train, X_test, Y_test, handler)

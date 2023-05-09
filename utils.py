@@ -1,7 +1,7 @@
 from torchvision import transforms
-from handlers import MNIST_Handler, SVHN_Handler, CIFAR10_Handler
-from data import get_MNIST, get_FashionMNIST, get_SVHN, get_CIFAR10
-from nets import Net, MNIST_Net, SVHN_Net, CIFAR10_Net
+from handlers import MNIST_Handler, SVHN_Handler, CIFAR10_Handler, SAC_Handler
+from data import get_MNIST, get_FashionMNIST, get_SVHN, get_CIFAR10, get_SAC
+from nets import Net, MNIST_Net, SVHN_Net, CIFAR10_Net, SAC_Net
 from query_strategies import RandomSampling, LeastConfidence, MarginSampling, EntropySampling, \
                              LeastConfidenceDropout, MarginSamplingDropout, EntropySamplingDropout, \
                              KMeansSampling, KCenterGreedy, BALDDropout, \
@@ -26,7 +26,12 @@ params = {'MNIST':
               {'n_epoch': 20, 
                'train_args':{'batch_size': 64, 'num_workers': 1},
                'test_args':{'batch_size': 1000, 'num_workers': 1},
-               'optimizer_args':{'lr': 0.05, 'momentum': 0.3}}
+               'optimizer_args':{'lr': 0.05, 'momentum': 0.3}},
+          'SAC':
+              {'n_epoch': 100,
+               'train_args': {'batch_size': 64, 'num_workers': 1},
+               'test_args': {'batch_size': 1000, 'num_workers': 1},
+               'optimizer_args': {'lr': 0.01, 'momentum': 0.5}},
           }
 
 def get_handler(name):
@@ -38,6 +43,8 @@ def get_handler(name):
         return SVHN_Handler
     elif name == 'CIFAR10':
         return CIFAR10_Handler
+    elif name == 'SAC':
+        return SAC_Handler
 
 def get_dataset(name):
     if name == 'MNIST':
@@ -48,6 +55,8 @@ def get_dataset(name):
         return get_SVHN(get_handler(name))
     elif name == 'CIFAR10':
         return get_CIFAR10(get_handler(name))
+    elif name == 'SAC':
+        return get_SAC(get_handler(name))
     else:
         raise NotImplementedError
         
@@ -60,6 +69,8 @@ def get_net(name, device):
         return Net(SVHN_Net, params[name], device)
     elif name == 'CIFAR10':
         return Net(CIFAR10_Net, params[name], device)
+    elif name == 'SAC':
+        return Net(SAC_Net, params[name], device)
     else:
         raise NotImplementedError
     
